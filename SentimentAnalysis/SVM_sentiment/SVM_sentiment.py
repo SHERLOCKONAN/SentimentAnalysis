@@ -66,7 +66,7 @@ def parseStopWord():
         seq.append(line)
 
 def buildword2vec():
-    f = open(os.path.join("../glove.6B.300d.txt"))
+    f = open(os.path.join("../Word2Vec/300features_10minwords_10context.txt"))
     for line in f:
         values = line.split()
         word = values[0]

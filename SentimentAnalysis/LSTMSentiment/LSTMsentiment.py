@@ -19,6 +19,8 @@ import csv
 import tensorflow as tf
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 from keras.backend.tensorflow_backend import set_session
+from keras.layers.wrappers import Bidirectional
+from keras.layers import Dropout
 config = tf.ConfigProto()
 #限制最多GPU占用为30%
 config.gpu_options.per_process_gpu_memory_fraction = 0.3
@@ -31,7 +33,7 @@ test_id_list = []
 test_content_list =[]
 def readTrainData():
     #使用pandas读取训练集
-    dataSetPath = "labeledTrainData.csv"
+    dataSetPath = "../labeledTrainData.csv"
     train = pd.read_csv(dataSetPath,encoding="ISO-8859-1")
     #将读取出来的数据转为DataFram结构
     df = pd.DataFrame(train)
@@ -44,7 +46,7 @@ def readTrainData():
         train_label_list.append(label)
 def readTestData():
     #使用pandas读取测试集
-    dataSetPath = "testData.csv"
+    dataSetPath = "../testData.csv"
     train = pd.read_csv(dataSetPath,encoding="ISO-8859-1")
     #将读取出来的数据转为DataFram结构
     df = pd.DataFrame(train)
@@ -73,7 +75,7 @@ def parseStopWord():
 
 def buildword2vec():
     #构建单词->词向量词典
-    f = open(os.path.join("./Word2Vec/300features_10minwords_10context.txt"))
+    f = open(os.path.join("../glove.6B.300d.txt"))
     for line in f:
         values = line.split()
         word = values[0]
@@ -107,8 +109,8 @@ parseStopWord()
 
 #序列化处理
 tokenizer = Tokenizer(num_words=None)
-tokenizer.fit_on_texts(content_list)
-sequences = tokenizer.texts_to_sequences(content_list)
+tokenizer.fit_on_texts(seq)
+sequences = tokenizer.texts_to_sequences(seq)
 word_index = tokenizer.word_index
 final_sequences=sequence.pad_sequences(sequences,maxlen=500)
 
@@ -134,7 +136,7 @@ y=label
 
 
 # 划分测试集和训练集
-Xtrain,Xtest,ytrain,ytest = train_test_split(X,y,test_size=0.2)
+Xtrain, Xtest, ytrain, ytest = train_test_split(X, y, test_size=0.1)
 #
 #网络构建
 
@@ -143,19 +145,27 @@ earlyStop = keras.callbacks.EarlyStopping(monitor='val_loss', min_delta=0.02,pat
 callbackList=[]
 callbackList.append(earlyStop)
 
+
+EMBEDDING_SIZE = 300
+HIDDEN_LAYER_SIZE = 256
+BATCH_SIZE = 128
+NUM_EPOCHS = 10
+
 embedding_layer = Embedding(len(word_index) + 1,
-                            300,
+                            EMBEDDING_SIZE,
                             weights=[embedding_matrix],
                             input_length=500,
-                            trainable=False)
-
+                            trainable=True)
 model=Sequential()
 model.add(embedding_layer)
-model.add(LSTM(128,dropout=0.2))
+model.add(Dropout(0.2))
+model.add(Bidirectional(LSTM(HIDDEN_LAYER_SIZE,dropout=0.2,recurrent_dropout=0.2),merge_mode='concat'))
+#分类问题，分类结果的输出纬度为1
 model.add(Dense(1))
+#二分类，使用sigmoid作为分类函数
 model.add(Activation('sigmoid'))
 model.compile(loss='binary_crossentropy',optimizer='adam',metrics=['accuracy'])
-model.fit(Xtrain,ytrain,batch_size=64,epochs=20,validation_data=(Xtest,ytest),callbacks=callbackList)
+model.fit(Xtrain,ytrain,batch_size=BATCH_SIZE,epochs=NUM_EPOCHS,validation_data=(Xtest,ytest))
 model.save("lstm_model.h5")
 print("save model succeed~")
 
