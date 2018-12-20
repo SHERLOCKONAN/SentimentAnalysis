@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import nltk
 from nltk.corpus import stopwords
 import pandas as pd
@@ -90,7 +91,7 @@ def makeFeatureVec(words,num_features):
         if embeddings_index.get(word) is not None:
             nwords = nwords + 1.
             featureVec = np.add(featureVec,embeddings_index.get(word))
-    #
+    featureVec = featureVec/nwords
     return featureVec
 
 
@@ -118,11 +119,11 @@ for line in seq:
     counter=counter+1
 print("Cal Mean Vec end!"+time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time())))
 
-pca = decomposition.PCA(n_components=300)
-reduced_Feature = pca.fit_transform(reviewFeatureVecs)
-print("reduced dimesion end!"+time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time())))
+# pca = decomposition.PCA(n_components=300)
+# reduced_Feature = pca.fit_transform(reviewFeatureVecs)
+# print("reduced dimesion end!"+time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time())))
 
-
+reduced_Feature = reviewFeatureVecs
 #numpy数组截断不生成新的数组，只返回原数组的引用
 train_final_seqs = reduced_Feature[0:len(train_content_list)]
 train_final_seqs_len = len(train_final_seqs)

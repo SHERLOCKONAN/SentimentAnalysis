@@ -1,13 +1,15 @@
-# 训练模型
+# -*- coding: utf-8 -*-
 import os
+import sys
 import time
 import pandas as pd
 import nltk
 from nltk.corpus import stopwords
 from gensim.models import Word2Vec
 from gensim.models import word2vec
+# reload(sys) 
+# sys.setdefaultencoding('utf8')
 
-# 训练结合初始化
 content_list = []
 seq = []
 embeddings_index = {}
